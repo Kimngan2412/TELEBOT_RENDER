@@ -4,6 +4,7 @@ from telethon import TelegramClient
 import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
+import os
 
 app = FastAPI()
 clients = {}  # To store Telegram clients per phone number
@@ -204,3 +205,30 @@ async def get_sessions():
         for session_id, session in sessions.items() if isinstance(session, dict) and session.get("is_active", False)
     ]
     return {"active_sessions": active_sessions}
+
+@app.post("/logout/")
+async def logout(phone_number: str):
+    # Check if the client exists
+    client = clients.get(phone_number)
+    if not client:
+        raise HTTPException(status_code=400, detail="Client not found or already logged out.")
+
+    try:
+        # Disconnect the client
+        await client.disconnect()
+        
+        # Remove the client from the clients and sessions dictionaries
+        clients.pop(phone_number, None)
+        session_to_remove = [sid for sid, session in sessions.items() if session.get("source_chat_id") == phone_number]
+        
+        for sid in session_to_remove:
+            sessions.pop(sid, None)
+
+        # Remove the session file
+        session_file = f'session_{phone_number}.session'
+        if os.path.exists(session_file):
+            os.remove(session_file)
+        
+        return {"message": "Successfully logged out and session data cleared."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred during logout: {str(e)}")
