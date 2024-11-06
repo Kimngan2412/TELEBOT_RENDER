@@ -38,17 +38,23 @@ class PasswordVerification(BaseModel):
     password: str
 
 # Helper function to create and store client
+# Hàm hỗ trợ tạo và lưu trữ client duy nhất cho mỗi số điện thoại
 def create_client(api_id, api_hash, phone_number):
-    client = TelegramClient(f'session_{phone_number}', api_id, api_hash)
+    # Đảm bảo mỗi file phiên là duy nhất cho mỗi số điện thoại
+    session_name = f"session_{phone_number}"
+    client = TelegramClient(session_name, api_id, api_hash)
     clients[phone_number] = client
     return client
 
 @app.post("/start-auth/")
 async def start_auth(credentials: Credentials):
-    client = create_client(credentials.api_id, credentials.api_hash, credentials.phone_number)
+    # Tạo hoặc lấy client cho số điện thoại này
+    client = clients.get(credentials.phone_number) or create_client(credentials.api_id, credentials.api_hash, credentials.phone_number)
     await client.connect()
 
+    # Kiểm tra xem client đã được xác thực chưa
     if not await client.is_user_authorized():
+        # Gửi mã xác thực
         await client.send_code_request(credentials.phone_number)
         return {
             "message": "Authorization required. Please enter the code using the /verify-code endpoint.",
@@ -189,7 +195,7 @@ async def forward_messages(request: ForwardRequest, background_tasks: Background
     )
     return {"message": "Forwarding process started in the background", "session_id": session_id}
 
-@app.post("/stop-forwarding/")
+@app.post("/stop-forwarding")
 async def stop_forwarding(session_id: str):
     if session_id in sessions:
         # Mark the session as inactive to stop the background task
@@ -206,7 +212,7 @@ async def get_sessions():
     ]
     return {"active_sessions": active_sessions}
 
-@app.post("/logout/")
+@app.post("/logout")
 async def logout(phone_number: str):
     # Check if the client exists
     client = clients.get(phone_number)
