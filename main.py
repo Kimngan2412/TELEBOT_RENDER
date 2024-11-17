@@ -342,13 +342,15 @@ async def stop_forwarding(session_id: str):
     else:
         raise HTTPException(status_code=404, detail="Session not found")
 
-@app.get("/get-sessions/")
-async def get_sessions():
+@app.get("/get-sessions")
+async def get_sessions(phone_number: str):
     """
-    API để lấy danh sách các session đang hoạt động từ MongoDB
+    API để lấy danh sách các session đang hoạt động của người dùng cụ thể từ MongoDB
     """
     session_collection = mongodb.db["sessions"]  # Đảm bảo truy vấn đúng collection
-    sessions = await session_collection.find({"is_active": True}).to_list(length=None)
+    
+    # Truy vấn các session của số điện thoại hiện tại
+    sessions = await session_collection.find({"is_active": True, "phone_number": phone_number}).to_list(length=None)
 
     # Chuyển đổi ObjectId và trả về dữ liệu chính xác
     def convert_objectid_to_str(document):
@@ -362,6 +364,7 @@ async def get_sessions():
     sessions = convert_objectid_to_str(sessions)
 
     return {"active_sessions": sessions}
+
 
 
 
