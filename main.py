@@ -53,7 +53,7 @@ class PasswordVerification(BaseModel):
 # Helper functions
 def create_client(api_id, api_hash, phone_number):
     session_name = f"session_{phone_number}"
-    client = TelegramClient(session_name, api_id, api_hash)
+    client = TelegramClient(session_name, api_id, api_hash, proxy=None)
     clients[phone_number] = client
     return client
 
