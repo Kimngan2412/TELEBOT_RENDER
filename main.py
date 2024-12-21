@@ -269,12 +269,12 @@ async def forward_messages_to_channel(client, session_id, source_chat_id, destin
                 except Exception as e:
                     print(f"Failed to forward message {message.id}: {e}")
 
-            await asyncio.sleep(5)  # Wait before checking again
+            await asyncio.sleep(10)  # Wait before checking again
     except asyncio.CancelledError:
         print("Task was cancelled.")
     except Exception as e:
         print(f"An error occurred: {e}")
-        await asyncio.sleep(5)  # Wait before retrying
+        await asyncio.sleep(10)  # Wait before retrying
     finally:
         print("Background task stopped.")
        
