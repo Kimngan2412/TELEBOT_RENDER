@@ -8,6 +8,7 @@ import telethon.tl.types
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
 from motor.motor_asyncio import AsyncIOMotorClient
+from telethon.errors import FloodWaitError
 
 # FastAPI app setup
 app = FastAPI()
@@ -80,11 +81,15 @@ async def get_user_info(phone_number):
     return await user_collection.find_one({"phone_number": phone_number})
 
 async def ensure_connected(client):
-    """
-    Đảm bảo client luôn được kết nối.
-    """
-    if not client.is_connected():
-        await client.connect()
+    while not client.is_connected():
+        try:
+            await client.connect()
+        except FloodWaitError as e:
+            print(f"Flood wait: chờ {e.seconds} giây trước khi thử lại.")
+            await asyncio.sleep(e.seconds)
+        except Exception as e:
+            print(f"Failed to connect: {e}")
+            await asyncio.sleep(5)  # Chờ trước khi thử lại
 
 async def maintain_connection(client):
     while True:
