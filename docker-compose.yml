@@ -1,0 +1,7 @@
+services:
+  api:
+    build: .
+    container_name: fastapi-telebot
+    ports:
+      - "8000:8000"
+    restart: always

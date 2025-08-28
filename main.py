@@ -22,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB setup
+# MongoDB setupz
 class MongoDB:
     def __init__(self, uri: str, db_name: str):
         self.client = AsyncIOMotorClient(uri)

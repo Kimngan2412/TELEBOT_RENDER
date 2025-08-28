@@ -1,2 +1,6 @@
 fastapi[all]
+uvicorn
 telethon
+motor
+pymongo
+python-dotenv
